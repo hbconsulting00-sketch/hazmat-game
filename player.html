@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<!-- ████ CUSTOMIZE: שנו את שם המשחק ████ -->
+<title>עבודה בטוחה עם חומ"ס</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800;900&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--or:#FF6B00;--orl:#FF9A3C;--og:rgba(255,107,0,.4);--pm:#9333EA;--pl:#C084FC;
+      --dark:#0F0A1A;--pan:#1A0F2E;--pan2:#231540;--gold:#FFD700;--ok:#00CC6A;--err:#FF4444}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:'Heebo',sans-serif;background:var(--dark);color:#fff;direction:rtl;min-height:100svh;
+     background-image:radial-gradient(ellipse at 30% 0%,rgba(107,33,168,.3),transparent 55%),
+                      radial-gradient(ellipse at 70% 100%,rgba(255,107,0,.2),transparent 55%)}
+.screen{display:none;flex-direction:column;align-items:center;min-height:100svh;
+        padding:20px 16px 36px;gap:16px;overflow-y:auto;text-align:center;position:relative;z-index:1}
+.screen.active{display:flex}
+
+/* ── JOIN ── */
+.join-icon{font-size:60px;line-height:1;margin-top:16px}
+.join-title{font-family:'Secular One',sans-serif;font-size:clamp(30px,9vw,46px);
+            background:linear-gradient(135deg,var(--orl),var(--pl));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.join-sub{font-size:15px;color:rgba(255,255,255,.5)}
+.section-label{font-size:11px;font-weight:800;color:var(--orl);letter-spacing:.18em;
+               text-transform:uppercase;width:100%;max-width:320px;text-align:right}
+.emoji-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:100%;max-width:320px}
+.emoji-btn{font-size:28px;padding:10px 6px;border-radius:12px;
+           border:2px solid rgba(147,51,234,.2);background:var(--pan);cursor:pointer;
+           transition:all .15s;min-height:52px;display:flex;align-items:center;justify-content:center}
+.emoji-btn:active{transform:scale(.9)}
+.emoji-btn.sel{border-color:var(--or);background:rgba(255,107,0,.15);transform:scale(1.1)}
+.name-input{width:100%;max-width:320px;padding:17px;background:var(--pan);
+            border:2px solid rgba(147,51,234,.3);border-radius:14px;color:#fff;
+            font-family:'Heebo',sans-serif;font-size:19px;font-weight:700;text-align:right;
+            outline:none;transition:border-color .2s}
+.name-input:focus{border-color:var(--or)}
+.name-input::placeholder{color:rgba(255,255,255,.22)}
+.big-btn{width:100%;max-width:320px;padding:19px;border:none;border-radius:15px;
+         font-family:'Heebo',sans-serif;font-size:20px;font-weight:900;cursor:pointer;
+         background:linear-gradient(135deg,var(--or),var(--orl));color:#fff;
+         box-shadow:0 0 28px var(--og);transition:all .2s}
+.big-btn:disabled{opacity:.4;cursor:not-allowed}
+.big-btn:not(:disabled):active{transform:scale(.97)}
+
+/* ── WAIT ── */
+#waitScreen{gap:18px}
+.wait-ring{width:84px;height:84px;border-radius:50%;border:3px solid var(--pm);
+           animation:ring 2s ease infinite;margin-top:24px}
+@keyframes ring{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.9);opacity:0}}
+.wait-avatar{font-size:64px;animation:bob 2s ease infinite;margin-top:-76px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.wait-name{font-family:'Secular One',sans-serif;font-size:26px;color:var(--orl)}
+.wait-msg{font-size:15px;color:rgba(255,255,255,.45);line-height:1.65;max-width:300px}
+.score-card{background:var(--pan);border:1px solid rgba(147,51,234,.25);
+            border-radius:18px;padding:16px 36px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.score-big{font-family:'Secular One',sans-serif;font-size:52px;color:var(--gold);
+           text-shadow:0 0 18px rgba(255,215,0,.4)}
+.score-lbl{font-size:13px;color:rgba(255,255,255,.4)}
+.wait-tips{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px}
+.wait-tip{background:var(--pan);border:1px solid rgba(147,51,234,.2);border-radius:10px;
+          padding:11px 15px;font-size:14px;color:rgba(255,255,255,.75);text-align:right;font-weight:600}
+
+/* ── QUESTION ── */
+#qScreen{text-align:right;align-items:stretch;padding-top:16px}
+.q-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.badge{padding:8px 16px;border-radius:22px;font-size:13px;font-weight:800;white-space:nowrap}
+.badge-or{background:linear-gradient(135deg,var(--or),var(--orl));color:#fff}
+.badge-pu{background:linear-gradient(135deg,var(--pm),var(--pl));color:#fff}
+.timer{font-family:'Secular One',sans-serif;font-size:44px;color:var(--gold);
+       text-shadow:0 0 14px rgba(255,215,0,.5);min-width:52px;text-align:center;line-height:1}
+.timer.urg{color:var(--err);animation:tpulse .5s infinite alternate}
+@keyframes tpulse{from{transform:scale(1)}to{transform:scale(1.1)}}
+.my-score-row{display:flex;align-items:center;justify-content:space-between;
+              background:var(--pan);border:1px solid rgba(147,51,234,.2);border-radius:12px;padding:10px 16px}
+.msl{font-size:13px;color:rgba(255,255,255,.45)}
+.msv{font-family:'Secular One',sans-serif;font-size:24px;color:var(--gold)}
+.q-text{font-family:'Secular One',sans-serif;font-size:clamp(18px,5.5vw,24px);
+        line-height:1.45;text-align:center;padding:18px;
+        background:var(--pan);border-radius:15px;border:1px solid rgba(147,51,234,.25)}
+
+/* תמונה */
+.qimg-player{border-radius:12px;overflow:hidden;max-height:210px;
+             display:flex;justify-content:center;background:rgba(0,0,0,.2)}
+.qimg-player img{max-width:100%;max-height:210px;object-fit:contain;display:block}
+.qimg-player.hidden{display:none}
+
+/* timer bar */
+.timer-wrap{height:5px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.timer-fill{height:100%;background:var(--ok);border-radius:99px;transition:width 1s linear,background .5s}
+.timer-fill.warn{background:var(--gold)}.timer-fill.danger{background:var(--err)}
+
+/* תשובות */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{width:100%;padding:18px 16px;border:2px solid rgba(147,51,234,.25);border-radius:15px;
+     background:var(--pan2);color:#fff;font-family:'Heebo',sans-serif;
+     font-size:clamp(17px,5vw,20px);font-weight:700;cursor:pointer;
+     text-align:right;display:flex;align-items:center;gap:12px;min-height:62px;line-height:1.35;
+     transition:all .18s}
+.opt:active{transform:scale(.97)}
+.opt.sel{border-color:var(--or);background:rgba(255,107,0,.12)}
+.opt.correct{border-color:var(--ok)!important;background:rgba(0,204,106,.12)!important;color:var(--ok)}
+.opt.wrong{border-color:var(--err)!important;opacity:.5}
+.opt.locked{cursor:default;pointer-events:none}
+.opt-l{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+       border-radius:10px;flex-shrink:0;background:rgba(255,107,0,.15);color:var(--orl);
+       font-size:15px;font-weight:900;transition:all .15s}
+.opt.sel .opt-l{background:var(--or);color:#fff}
+.opt.correct .opt-l{background:var(--ok);color:#1a1a1a}
+.opt.wrong .opt-l{background:var(--err);color:#fff}
+
+/* FEEDBACK */
+.feedback{display:flex;flex-direction:column;align-items:center;gap:8px;
+          padding:16px;border-radius:16px;width:100%}
+.fb-ok{background:rgba(0,204,106,.1);border:1px solid var(--ok)}
+.fb-err{background:rgba(255,68,68,.1);border:1px solid var(--err)}
+.fb-time{background:rgba(255,215,0,.08);border:1px solid var(--gold)}
+.fb-wait{background:rgba(147,51,234,.1);border:1px solid rgba(147,51,234,.3)}
+.fb-icon{font-size:42px}
+.fb-title{font-family:'Secular One',sans-serif;font-size:22px}
+.fb-pts{font-family:'Secular One',sans-serif;font-size:32px;color:var(--gold)}
+.fb-hint{font-size:13px;color:rgba(255,255,255,.5)}
+.fb-sub{font-size:14px;color:rgba(255,255,255,.5)}
+.fb-correct{font-size:15px;color:rgba(255,255,255,.85);text-align:center}
+.fb-correct strong{color:var(--ok)}
+
+/* EXPLANATION POPUP */
+.expl-box{position:fixed;inset:0;z-index:100;background:rgba(10,5,25,.92);
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          padding:24px;text-align:center;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.expl-inner{background:linear-gradient(135deg,var(--pan),var(--pan2));
+            border:2px solid var(--or);border-radius:22px;
+            padding:26px 22px;max-width:360px;width:100%;
+            display:flex;flex-direction:column;gap:14px}
+.expl-inner .expl-head{color:var(--orl);font-size:17px;font-weight:800}
+.expl-inner .expl-text{font-size:16px;line-height:1.7;color:rgba(255,255,255,.9)}
+.expl-inner .expl-wait{font-size:12px;color:rgba(255,255,255,.35)}
+
+/* flash */
+#flash{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0;transition:opacity .4s;
+       background:radial-gradient(ellipse at center,rgba(0,204,106,.3),transparent 70%)}
+#flash.go{opacity:1}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+
+<!-- JOIN -->
+<div class="screen active" id="joinScreen">
+  <div class="join-icon">🎮</div>
+  <!-- ████ CUSTOMIZE ████ -->
+  <div class="join-title">עבודה בטוחה עם חומ"ס</div>
+  <div class="join-sub">בחרי אמוג׳י ושם כדי להצטרף!</div>
+  <div class="section-label">בחרי אמוג׳י</div>
+  <div class="emoji-grid" id="iconGrid"></div>
+  <div class="section-label">השם שלך</div>
+  <input class="name-input" id="nameInput" type="text" placeholder="הכניסי שם..." maxlength="16" autocomplete="off">
+  <button class="big-btn" id="joinBtn" disabled>🎮 הצטרפות למשחק</button>
+</div>
+
+<!-- WAIT -->
+<div class="screen" id="waitScreen">
+  <div class="wait-ring"></div>
+  <div class="wait-avatar" id="waitAvatar">😊</div>
+  <div class="wait-name" id="waitName">שמי</div>
+  <div class="wait-msg">⏳ ממתינים שהמנחה תתחיל...<br>
+    <span style="font-size:13px;opacity:.7">השאלה תופיע כאן ברגע שהמשחק מתחיל</span>
+  </div>
+  <div class="wait-tips">
+    <div class="wait-tip">📱 השאירי את המסך דולק</div>
+    <div class="wait-tip">⚡ ענו מהר — יש בונוס מהירות!</div>
+    <div class="wait-tip">🏆 ענו נכון כדי לצבור נקודות</div>
+  </div>
+  <div class="score-card">
+    <div class="score-big" id="waitScore">0</div>
+    <div class="score-lbl">נקודות</div>
+  </div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="qScreen">
+  <div class="q-top">
+    <div class="badge badge-or" id="qCat">קטגוריה</div>
+    <div class="timer" id="qTimer">20</div>
+  </div>
+  <div class="my-score-row">
+    <span class="msl">הניקוד שלי</span>
+    <span class="msv" id="qScore">0</span>
+  </div>
+  <div class="q-text" id="qText"></div>
+  <div class="qimg-player hidden" id="qImgWrap">
+    <img id="qImg" src="" alt="">
+  </div>
+  <div class="timer-wrap"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="opts" id="opts"></div>
+  <div id="feedbackArea" style="display:none"></div>
+  <div class="expl-box" id="explBox" style="display:none">
+    <div class="expl-inner">
+      <div class="expl-head">💡 הסבר</div>
+      <div class="expl-text" id="explText"></div>
+      <div class="expl-wait">ממתין לשאלה הבאה...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+/* ════════════════════════════════════
+   ████ CUSTOMIZE — Firebase Config ████
+   זהה ל-host.html
+   ════════════════════════════════════ */
+const FB_CONFIG = {
+  apiKey:            "AIzaSyCnya7Hcz8yYKOv6GSJsWKjl0Fu2PDfxOg",
+  authDomain:        "hazmat-game.firebaseapp.com",
+  databaseURL:       "https://hazmat-game-default-rtdb.firebaseio.com",
+  projectId:         "hazmat-game",
+  storageBucket:     "hazmat-game.firebasestorage.app",
+  messagingSenderId: "1057722628376",
+  appId:             "1:1057722628376:web:c1c9ee1af53a8e7428c66d"
+};
+const GAME_PATH = 'game_hazmat'; // זהה ל-host.html!
+const TIMER_SEC = 20;
+
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.database();
+
+const ICONS = ['😊','😎','🤩','🦁','🐯','🦊','🐧','🦄','🚀','🔥','⚡','🎯','💪','🏆','👷','🎮'];
+let myId=null, myName='', myIcon='😊', myScore=0;
+let myAnswer=null, timerInterval=null, selectedIcon=null, startTime=0, lastQId=null;
+
+// Icon grid
+const grid=document.getElementById('iconGrid');
+ICONS.forEach(icon=>{
+  const btn=document.createElement('button');
+  btn.className='emoji-btn'; btn.textContent=icon;
+  btn.onclick=()=>{
+    document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel'); selectedIcon=icon; checkReady();
+  };
+  grid.appendChild(btn);
+});
+grid.firstChild.click();
+
+const nameInput=document.getElementById('nameInput');
+nameInput.addEventListener('input',checkReady);
+function checkReady(){
+  document.getElementById('joinBtn').disabled=!nameInput.value.trim()||!selectedIcon;
+}
+
+document.getElementById('joinBtn').onclick=()=>{
+  myName=nameInput.value.trim(); myIcon=selectedIcon||'😊';
+  const pRef=db.ref(GAME_PATH+'/players').push();
+  myId=pRef.key;
+  pRef.set({name:myName,icon:myIcon,score:0});
+  window.addEventListener('beforeunload',()=>db.ref(GAME_PATH+'/players/'+myId).remove());
+
+  document.getElementById('waitAvatar').textContent=myIcon;
+  document.getElementById('waitName').textContent=myName;
+
+  // score listener
+  db.ref(GAME_PATH+`/players/${myId}/score`).on('value',snap=>{
+    myScore=snap.val()||0;
+    document.getElementById('waitScore').textContent=myScore;
+    const el=document.getElementById('qScore');
+    if(el) el.textContent=myScore;
+  });
+
+  show('waitScreen');
+  listenGame();
+};
+
+function listenGame(){
+  // game state
+  db.ref(GAME_PATH+'/game/state').on('value',snap=>{
+    const s=snap.val();
+    if(s==='wheel'&&myId) show('waitScreen');
+    if(s==='lobby'&&myId) show('waitScreen');
+  });
+
+  // current question
+  db.ref(GAME_PATH+'/game/current').on('value',snap=>{
+    const data=snap.val();
+    if(!data){ if(myId) show('waitScreen'); clearInterval(timerInterval); myAnswer=null; return; }
+    if(data.id===lastQId) return; // prevent re-render
+    if(data.state==='question'){ lastQId=data.id; showQuestion(data); }
+    if(data.state==='reveal'&&data.correct!==undefined) doReveal(data);
+  });
+}
+
+function showQuestion(data){
+  if(!myId) return;
+  myAnswer=null; startTime=Date.now();
+  show('qScreen');
+
+  document.getElementById('qCat').textContent=data.catName||'';
+  document.getElementById('qText').textContent=data.q||'';
+  document.getElementById('qScore').textContent=myScore;
+  document.getElementById('feedbackArea').style.display='none';
+  document.getElementById('explBox').style.display='none';
+
+  const wrap=document.getElementById('qImgWrap');
+  if(data.image){ document.getElementById('qImg').src=data.image; wrap.classList.remove('hidden'); }
+  else { wrap.classList.add('hidden'); }
+
+  const letters=['א','ב','ג','ד'];
+  const optsEl=document.getElementById('opts');
+  optsEl.innerHTML='';
+  (data.opts||[]).forEach((opt,i)=>{
+    const d=document.createElement('div');
+    d.className='opt'; d.id='opt-'+i;
+    d.innerHTML=`<div class="opt-l">${letters[i]}</div><div>${opt}</div>`;
+    d.onclick=()=>selectAnswer(i,data);
+    optsEl.appendChild(d);
+  });
+
+  clearInterval(timerInterval);
+  let sec=TIMER_SEC;
+  const fill=document.getElementById('timerFill');
+  const timerEl=document.getElementById('qTimer');
+  fill.style.width='100%'; fill.className='timer-fill';
+  timerEl.textContent=sec; timerEl.className='timer';
+  timerInterval=setInterval(()=>{
+    sec--;
+    fill.style.width=Math.round(sec/TIMER_SEC*100)+'%';
+    timerEl.textContent=sec;
+    if(sec<=10){ fill.className='timer-fill warn'; timerEl.className='timer urg'; }
+    if(sec<=5)  fill.className='timer-fill danger';
+    if(sec<=0){ clearInterval(timerInterval); document.querySelectorAll('.opt').forEach(o=>o.classList.add('locked')); if(!myAnswer) timeOut(); }
+  },1000);
+}
+
+function selectAnswer(i,data){
+  if(myAnswer!==null||!myId) return;
+  myAnswer=i;
+  clearInterval(timerInterval);
+  document.querySelectorAll('.opt').forEach(o=>o.classList.add('locked'));
+  document.getElementById('opt-'+i).classList.add('sel');
+  db.ref(GAME_PATH+'/answers/'+myId).set(i);
+
+  const fb=document.getElementById('feedbackArea');
+  fb.style.display='block';
+  fb.innerHTML=`<div class="feedback fb-wait">
+    <span class="fb-icon">⏳</span>
+    <div class="fb-title">תשובתך נרשמה!</div>
+    <div class="fb-sub">ממתין שהמנחה תחשוף את התשובה...</div>
+  </div>`;
+}
+
+function doReveal(data){
+  clearInterval(timerInterval);
+  const correct=data.correct;
+  const letters=['א','ב','ג','ד'];
+  document.querySelectorAll('.opt').forEach((b,i)=>{
+    b.classList.add('locked');
+    if(i===correct) b.classList.add('correct');
+    else if(b.classList.contains('sel')) b.classList.add('wrong');
+  });
+
+  const fb=document.getElementById('feedbackArea');
+  fb.style.display='block';
+
+  if(myAnswer===null){
+    fb.innerHTML=`<div class="feedback fb-time">
+      <span class="fb-icon">⏰</span>
+      <div class="fb-title">הזמן נגמר!</div>
+      <div class="fb-correct">הנכון: <strong>${letters[correct]}. ${(data.opts||[])[correct]||''}</strong></div>
+    </div>`;
+  } else if(myAnswer===correct){
+    const elapsed=Date.now()-startTime;
+    const bonus=Math.floor(Math.max(0,(1-elapsed/(TIMER_SEC*1000)))*100*0.5);
+    fb.innerHTML=`<div class="feedback fb-ok">
+      <span class="fb-icon">✅</span>
+      <div class="fb-title">תשובה נכונה!</div>
+      <div class="fb-pts">+${100+bonus} נקודות</div>
+      ${bonus>0?'<div class="fb-hint">כולל בונוס מהירות ⚡</div>':''}
+    </div>`;
+    const fl=document.getElementById('flash');
+    fl.classList.add('go'); setTimeout(()=>fl.classList.remove('go'),700);
+  } else {
+    fb.innerHTML=`<div class="feedback fb-err">
+      <span class="fb-icon">❌</span>
+      <div class="fb-title">לא נכון</div>
+      <div class="fb-correct">הנכון: <strong>${letters[correct]}. ${(data.opts||[])[correct]||''}</strong></div>
+    </div>`;
+  }
+
+  // Explanation popup — מוצג 1.5 שניות אחרי הפידבק
+  if(data.ans||data.inst){
+    setTimeout(()=>{
+      document.getElementById('explText').innerHTML=data.ans||data.inst||'';
+      document.getElementById('explBox').style.display='flex';
+    },1500);
+  }
+}
+
+function timeOut(){
+  myAnswer=null;
+  const fb=document.getElementById('feedbackArea');
+  fb.style.display='block';
+  fb.innerHTML=`<div class="feedback fb-time">
+    <span class="fb-icon">⏰</span>
+    <div class="fb-title">הזמן נגמר!</div>
+  </div>`;
+}
+
+function show(id){
+  ['joinScreen','waitScreen','qScreen'].forEach(s=>{
+    const el=document.getElementById(s);
+    el.classList.remove('active');
+    el.style.display='none';
+  });
+  const el=document.getElementById(id);
+  if(el){ el.style.display='flex'; el.classList.add('active'); }
+}
+</script>
+</body>
+</html>
