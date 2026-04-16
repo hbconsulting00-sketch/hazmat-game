@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מנחה | עבודה בטוחה עם חומ"ס</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800;900&family=Secular+One&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --c0:#2E81C5;--c1:#78318E;--c2:#1a6b3a;--c3:#7a3b0e;
+  --green:#93C93E;--gold:#F6C90E;--dark:#0f0f1a;--pan:#1a0f2e;--pan2:#16213e;--white:#fff;
+  --ok:#00CC6A;--err:#FF4444;--or:#FF6B00;--orl:#FF9A3C;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Heebo',sans-serif;background:var(--dark);color:var(--white);direction:rtl}
+
+/* ── LOBBY ── */
+#lobby{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;z-index:10;padding:24px;text-align:center;gap:20px}
+.brand{font-size:11px;font-weight:800;letter-spacing:.3em;color:var(--green);text-transform:uppercase}
+h1{font-family:'Secular One',sans-serif;font-size:clamp(32px,4vw,56px);line-height:1.1;
+   background:linear-gradient(135deg,var(--orl),#fff 40%,#C084FC);
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lobby-cols{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px}
+.card{background:var(--pan);border:1px solid rgba(147,51,234,.3);border-radius:20px;padding:22px;
+      display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;min-width:210px;max-width:320px}
+.clabel{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--orl);text-transform:uppercase}
+.join-url{font-size:11px;font-weight:600;color:var(--gold);word-break:break-all;text-align:center;opacity:.7}
+.pcount{font-size:36px;font-weight:900;color:var(--or)}
+.pcount-sub{font-size:12px;color:rgba(255,255,255,.4)}
+.sb-list{display:flex;flex-direction:column;gap:7px;width:100%;max-height:220px;overflow-y:auto}
+.sb-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:10px;
+        padding:8px 14px;border:1px solid rgba(147,51,234,.12)}
+.sb-row.top1{border-color:var(--gold);background:rgba(255,215,0,.07)}
+.sb-rank{font-size:16px;width:24px;text-align:center}
+.sb-icon{font-size:18px}.sb-name{flex:1;font-size:14px;font-weight:700}
+.sb-pts{font-family:'Secular One',sans-serif;font-size:20px;color:var(--gold)}
+.sb-empty{font-size:13px;color:rgba(255,255,255,.3);text-align:center;padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;
+     border-radius:14px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:800;transition:all .18s}
+.btn:active{transform:scale(.97)}
+.btn-main{background:linear-gradient(135deg,var(--or),var(--orl));color:#fff;font-size:20px;
+          padding:17px 52px;box-shadow:0 0 28px rgba(255,107,0,.4)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 0 44px rgba(255,107,0,.5)}
+.btn-ghost{background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:14px;
+           padding:10px 22px;border:1px solid rgba(255,255,255,.12)}
+
+/* ── GAME ── */
+#game{display:none;position:fixed;inset:0;z-index:10;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;
+        background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.game-title{font-family:'Secular One',sans-serif;font-size:16px;color:var(--orl)}
+.top-btns{display:flex;gap:8px}
+.bsm{padding:7px 14px;font-size:12px;font-weight:800;border:none;border-radius:9px;
+     cursor:pointer;transition:all .2s;font-family:'Heebo',sans-serif}
+.b-or{background:var(--or);color:#fff}
+.b-dk{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.12)}
+.bsm:hover{transform:scale(1.05)}
+
+/* ── MAIN GAME AREA ── */
+#gameMain{flex:1;display:flex;gap:0;overflow:hidden}
+
+/* ── LEFT: BOARD + WHEEL ── */
+#leftPanel{display:flex;flex-direction:column;flex:1;gap:12px;padding:12px;overflow:hidden}
+
+/* ── JEOPARDY BOARD ── */
+#board{display:grid;grid-template-rows:auto repeat(4,1fr);gap:4px;flex:1}
+.board-header-row{display:grid;gap:4px}
+.board-row{display:grid;gap:4px}
+
+.cat-header{background:var(--c0);border-radius:8px;display:flex;align-items:center;
+            justify-content:center;padding:8px 4px;font-size:clamp(11px,1.2vw,14px);
+            font-weight:900;text-align:center;line-height:1.2;min-height:52px}
+.cat-header:nth-child(2){background:var(--c1)}
+.cat-header:nth-child(3){background:var(--c2)}
+.cat-header:nth-child(4){background:var(--c3)}
+
+.cell{border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-family:'Secular One',sans-serif;font-size:clamp(18px,2.5vw,32px);
+      font-weight:900;color:var(--gold);cursor:default;transition:all .3s;
+      border:2px solid rgba(255,255,255,.08);min-height:48px}
+.cell.available{background:var(--pan2);border-color:rgba(255,255,255,.1)}
+.cell.selected{background:rgba(255,107,0,.3);border-color:var(--or);
+               box-shadow:0 0 20px rgba(255,107,0,.5);animation:cellpulse .6s ease infinite alternate}
+@keyframes cellpulse{from{box-shadow:0 0 10px rgba(255,107,0,.4)}to{box-shadow:0 0 30px rgba(255,107,0,.8)}}
+.cell.used{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.05);color:rgba(255,255,255,.1)}
+
+/* ── WHEEL AREA ── */
+#wheelArea{display:flex;align-items:center;gap:16px;flex-shrink:0;padding:8px 0}
+.wheel-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+#wheelCanvas{border-radius:50%;filter:drop-shadow(0 0 16px rgba(120,49,142,.6))}
+.wheel-ptr{position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+           width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;
+           border-top:20px solid var(--or);filter:drop-shadow(0 0 6px var(--or))}
+.wheel-info{display:flex;flex-direction:column;gap:8px;flex:1}
+.wheel-result{font-family:'Secular One',sans-serif;font-size:15px;color:#fff;min-height:20px}
+.wheel-result span{color:var(--orl)}
+.btn-spin{padding:12px 28px;font-size:16px;font-weight:900;
+          background:linear-gradient(135deg,var(--c1),#C084FC);border:none;border-radius:12px;
+          color:#fff;cursor:pointer;box-shadow:0 0 20px rgba(147,51,234,.4);
+          transition:all .2s;font-family:'Heebo',sans-serif}
+.btn-spin:hover{transform:scale(1.05)}
+.btn-spin:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.wheel-hdr{font-size:13px;font-weight:800;color:rgba(255,255,255,.5)}
+
+/* ── RIGHT: SCOREBOARD ── */
+#rightPanel{width:200px;background:rgba(0,0,0,.3);border-right:1px solid rgba(255,255,255,.08);
+            display:flex;flex-direction:column;gap:10px;padding:12px;overflow-y:auto;flex-shrink:0}
+.right-label{font-size:10px;font-weight:800;letter-spacing:.15em;color:var(--orl);text-transform:uppercase}
+
+/* ── QUESTION OVERLAY ── */
+#qOverlay{display:none;position:fixed;inset:0;z-index:50;background:rgba(8,5,20,.96);
+          flex-direction:column;align-items:center;justify-content:flex-start;
+          padding:20px 32px 100px;gap:14px;overflow-y:auto}
+#qOverlay.open{display:flex}
+
+.qhdr{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:900px;gap:10px}
+.qbadge{padding:8px 18px;border-radius:20px;font-size:15px;font-weight:800}
+.qcat{background:linear-gradient(135deg,var(--or),var(--orl));color:#fff}
+.qpts-badge{background:linear-gradient(135deg,var(--c1),#C084FC);color:#fff}
+.qtimer{font-family:'Secular One',sans-serif;font-size:52px;color:var(--gold);
+        text-shadow:0 0 18px rgba(255,207,14,.5);line-height:1}
+.qtimer.urg{color:var(--err);animation:tpulse .5s infinite alternate}
+.qtimer.done{color:rgba(255,255,255,.3)}
+@keyframes tpulse{from{transform:scale(1)}to{transform:scale(1.1)}}
+
+.qtext{font-family:'Secular One',sans-serif;font-size:clamp(22px,2.8vw,34px);
+       line-height:1.4;text-align:center;padding:20px;
+       background:var(--pan);border-radius:14px;border:1px solid rgba(147,51,234,.3);
+       width:100%;max-width:900px}
+
+.qimg-wrap{max-width:700px;width:100%;border-radius:14px;overflow:hidden}
+.qimg-wrap img{width:100%;max-height:260px;object-fit:cover;border-radius:14px;display:block}
+.qimg-wrap.hidden{display:none}
+
+.qanswers{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:900px}
+.abtn{padding:16px;border:2px solid rgba(147,51,234,.25);border-radius:12px;background:var(--pan2);
+      color:#fff;font-family:'Heebo',sans-serif;font-size:18px;font-weight:700;
+      cursor:default;text-align:right;display:flex;align-items:center;gap:10px;min-height:60px;line-height:1.35}
+.abtn .ltr{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+           border-radius:8px;background:rgba(255,107,0,.15);color:var(--orl);font-size:14px;font-weight:900;flex-shrink:0}
+.abtn.correct{border-color:var(--ok)!important;background:rgba(0,204,106,.12)!important;color:var(--ok)}
+.abtn.wrong{border-color:var(--err)!important;opacity:.35}
+
+.answered-count{text-align:center;font-size:16px;color:rgba(255,255,255,.55);font-weight:700;width:100%;max-width:900px}
+.answered-count b{color:var(--orl)}
+
+.reveal-big{width:100%;max-width:900px;padding:20px;
+            background:linear-gradient(135deg,var(--or),var(--orl));
+            border:none;border-radius:16px;color:#fff;font-family:'Heebo',sans-serif;
+            font-size:22px;font-weight:900;cursor:pointer;
+            box-shadow:0 0 28px rgba(255,107,0,.4);transition:all .2s}
+.reveal-big:hover{transform:translateY(-2px)}
+.reveal-big.pulse{animation:revpulse 1s ease-in-out infinite}
+@keyframes revpulse{0%,100%{box-shadow:0 0 28px rgba(255,107,0,.4)}50%{box-shadow:0 0 60px rgba(255,107,0,.9)}}
+
+.next-big{display:none;width:100%;max-width:900px;padding:18px;
+          background:linear-gradient(135deg,var(--c1),#C084FC);
+          border:none;border-radius:16px;color:#fff;font-family:'Heebo',sans-serif;
+          font-size:20px;font-weight:900;cursor:pointer;
+          box-shadow:0 0 28px rgba(147,51,234,.4);transition:all .2s}
+.next-big:hover{transform:translateY(-2px)}
+.next-big.visible{display:block}
+
+.qstats{background:var(--pan);border-radius:12px;padding:14px;width:100%;max-width:900px}
+.qstats-title{font-size:12px;font-weight:800;color:var(--orl);margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase}
+.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:13px}
+.stat-lbl{width:20px;font-weight:800;color:#C084FC}
+.stat-bar{flex:1;height:14px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden}
+.stat-fill{height:100%;border-radius:5px;transition:width 1s ease;background:linear-gradient(90deg,var(--or),var(--c1))}
+.stat-fill.correct{background:linear-gradient(90deg,#00a855,var(--ok))}
+.stat-cnt{width:36px;text-align:left;color:rgba(255,255,255,.45);font-size:12px}
+
+.qexpl{background:linear-gradient(135deg,rgba(255,107,0,.08),rgba(147,51,234,.08));
+       border:1px solid var(--or);border-radius:12px;padding:16px 20px;
+       font-size:17px;line-height:1.7;width:100%;max-width:900px}
+.qexpl strong{color:var(--orl)}
+
+/* ── SCORE SCREEN ── */
+#scoreScreen{display:none;position:fixed;inset:0;z-index:60;background:var(--dark);
+             overflow-y:auto;flex-direction:column;align-items:center;padding:30px 20px;gap:20px}
+#scoreScreen.open{display:flex}
+.score-title{font-family:'Secular One',sans-serif;font-size:clamp(28px,5vw,48px);color:var(--gold)}
+.final-grid{width:100%;max-width:500px;display:flex;flex-direction:column;gap:10px}
+.final-row{display:flex;align-items:center;gap:14px;background:var(--pan);
+           border:1px solid rgba(147,51,234,.2);border-radius:14px;padding:14px 20px}
+.final-row.first{background:rgba(255,215,0,.07);border-color:rgba(255,215,0,.3)}
+.final-rank{font-size:24px;width:36px;text-align:center}
+.final-icon{font-size:26px}.final-name{flex:1;font-size:18px;font-weight:800}
+.final-pts{font-family:'Secular One',sans-serif;font-size:28px;color:var(--gold)}
+.score-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* late answer badge */
+.late-badge{display:inline-block;background:rgba(255,215,0,.15);border:1px solid var(--gold);
+            border-radius:8px;padding:4px 10px;font-size:12px;color:var(--gold);margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <div class="brand">HB Learning</div>
+  <h1>עבודה בטוחה עם חומ"ס</h1>
+  <div class="lobby-cols">
+    <div class="card">
+      <div class="clabel">📱 סרקו להצטרף</div>
+      <div id="qrcode"></div>
+      <div class="join-url" id="joinUrl"></div>
+      <div class="pcount" id="playerCount">0</div>
+      <div class="pcount-sub">משתתפים מחוברים</div>
+    </div>
+    <div class="card">
+      <div class="clabel">🏆 שחקנים</div>
+      <div class="sb-list" id="lobbyScoreboard"><div class="sb-empty">ממתין לשחקנים...</div></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <button class="btn btn-main" id="startBtn">▶ התחל משחק</button>
+    <button class="btn btn-ghost" id="resetBtn">🗑️ אפס הכל</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <div class="topbar">
+    <div class="game-title">עבודה בטוחה עם חומ"ס</div>
+    <div class="top-btns">
+      <button class="bsm b-or" onclick="openScoreScreen()">🏆 ניקוד</button>
+      <button class="bsm b-dk" id="backLobbyBtn">🏠 לובי</button>
+      <button class="bsm b-dk" id="resetGameBtn">🗑️ אפס</button>
+    </div>
+  </div>
+
+  <div id="gameMain">
+    <!-- RIGHT: scoreboard -->
+    <div id="rightPanel">
+      <div class="right-label">🏆 ניקוד</div>
+      <div class="sb-list" id="gameSidebar"><div class="sb-empty">אין שחקנים</div></div>
+    </div>
+
+    <!-- LEFT: board + wheel -->
+    <div id="leftPanel">
+      <!-- JEOPARDY BOARD -->
+      <div id="board"></div>
+
+      <!-- WHEEL AREA -->
+      <div id="wheelArea">
+        <div class="wheel-wrap">
+          <canvas id="wheelCanvas" width="180" height="180"></canvas>
+          <div class="wheel-ptr"></div>
+        </div>
+        <div class="wheel-info">
+          <div class="wheel-hdr" id="wheelHdr">סובבי את הגלגל לבחירת קטגוריה!</div>
+          <div class="wheel-result" id="wheelResult"></div>
+          <button class="btn-spin" id="spinBtn">🎡 סובב!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTION OVERLAY -->
+<div id="qOverlay">
+  <div class="qhdr">
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="qbadge qcat" id="qCat">קטגוריה</span>
+      <span class="qbadge qpts-badge" id="qPts">נק׳</span>
+    </div>
+    <div class="qtimer" id="qTimer">20</div>
+  </div>
+  <div class="qtext" id="qText"></div>
+  <div class="qimg-wrap hidden" id="qImgWrap"><img id="qImg" src="" alt=""></div>
+  <div class="qanswers" id="qAnswers"></div>
+  <div class="answered-count" id="answeredCount" style="display:none"></div>
+  <button class="reveal-big" id="revealBtn">✅ חשוף תשובה</button>
+  <div class="qstats" id="qStats" style="display:none">
+    <div class="qstats-title">📊 התפלגות תשובות</div>
+    <div id="statBars"></div>
+  </div>
+  <div class="qexpl" id="qExpl" style="display:none"></div>
+  <button class="next-big" id="nextBtn">← חזרה ללוח</button>
+</div>
+
+<!-- SCORE SCREEN -->
+<div id="scoreScreen">
+  <div class="score-title">🏆 לוח ניקוד</div>
+  <div class="final-grid" id="finalGrid"></div>
+  <div class="score-btns">
+    <button class="btn btn-main" onclick="closeScoreScreen()">← חזרה למשחק</button>
+    <button class="btn btn-ghost" onclick="backToLobbyFn()">🏠 לובי</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const FB_CONFIG = {
+  apiKey:            "AIzaSyCnya7Hcz8yYKOv6GSJsWKjl0Fu2PDfxOg",
+  authDomain:        "hazmat-game.firebaseapp.com",
+  databaseURL:       "https://hazmat-game-default-rtdb.firebaseio.com",
+  projectId:         "hazmat-game",
+  storageBucket:     "hazmat-game.firebasestorage.app",
+  messagingSenderId: "1057722628376",
+  appId:             "1:1057722628376:web:c1c9ee1af53a8e7428c66d"
+};
+const GAME_PATH = 'game_hazmat';
+const TIMER_SEC = 20;
+const POINTS_NORMAL = 1; // multiplier on time
+const POINTS_LATE   = 0.5; // multiplier after timer
+
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.database();
+
+// QR
+const _base = window.location.href.split('/').slice(0,-1).join('/');
+const PLAYER_URL = _base + '/player.html';
+const _qr = document.createElement('img');
+_qr.style.cssText='width:140px;height:140px;border-radius:8px';
+_qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(PLAYER_URL)}&bgcolor=ffffff&color=0f0f1a&margin=2`;
+document.getElementById('qrcode').appendChild(_qr);
+document.getElementById('joinUrl').textContent=PLAYER_URL;
+
+// State
+let CATS=[], QS=[], players={}, playerAnswers={};
+let currentQ=null, timerInterval=null, revealed=false;
+let usedQIds=new Set(), spinning=false, wheelAngle=0;
+let currentPoints=100, timerDone=false;
+
+// Auto-reset on host load
+db.ref(GAME_PATH+'/game').remove();
+db.ref(GAME_PATH+'/answers').remove();
+
+// Load questions
+fetch('questions.json').then(r=>r.json()).then(data=>{
+  CATS=data.categories; QS=data.questions;
+  buildBoard();
+  buildWheel();
+});
+
+// Players listener
+db.ref(GAME_PATH+'/players').on('value',snap=>{
+  players=snap.val()||{};
+  renderAll();
+});
+
+// Answers listener
+db.ref(GAME_PATH+'/answers').on('value',snap=>{
+  playerAnswers=snap.val()||{};
+  const cnt=Object.keys(playerAnswers).length;
+  const tot=Object.keys(players).length;
+  const el=document.getElementById('answeredCount');
+  if(el&&currentQ&&!revealed){
+    el.style.display='block';
+    el.innerHTML=`<b>${cnt}</b> מתוך ${tot} ענו`;
+  }
+  const revBtn=document.getElementById('revealBtn');
+  if(revBtn&&currentQ&&!revealed&&cnt>0){
+    revBtn.classList.add('pulse');
+    if(cnt>=tot&&tot>0) revBtn.textContent='✅ כולם ענו — חשוף תשובה!';
+  }
+});
+
+function renderAll(){
+  const sorted=Object.entries(players).sort((a,b)=>(b[1].score||0)-(a[1].score||0));
+  const cnt=sorted.length;
+  document.getElementById('playerCount').textContent=cnt;
+
+  const tmpl=([,p],i)=>`
+    <div class="sb-row ${i===0?'top1':''}">
+      <span class="sb-rank">${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span>
+      <span class="sb-icon">${p.icon||'😊'}</span>
+      <span class="sb-name">${p.name||'שחקן'}</span>
+      <span class="sb-pts">${p.score||0}</span>
+    </div>`;
+
+  const lEl=document.getElementById('lobbyScoreboard');
+  if(lEl) lEl.innerHTML=cnt===0?'<div class="sb-empty">ממתין לשחקנים...</div>':sorted.map(tmpl).join('');
+  const gEl=document.getElementById('gameSidebar');
+  if(gEl) gEl.innerHTML=cnt===0?'<div class="sb-empty">אין שחקנים</div>':sorted.map(tmpl).join('');
+  const fEl=document.getElementById('finalGrid');
+  if(fEl) fEl.innerHTML=sorted.map(([,p],i)=>`
+    <div class="final-row ${i===0?'first':''}">
+      <span class="final-rank">${['🥇','🥈','🥉'][i]||`${i+1}.`}</span>
+      <span class="final-icon">${p.icon||'😊'}</span>
+      <span class="final-name">${p.name||'שחקן'}</span>
+      <span class="final-pts">${p.score||0}</span>
+    </div>`).join('');
+}
+
+// ── BOARD ──
+const CAT_COLORS=['#2E81C5','#78318E','#1a6b3a','#7a3b0e'];
+const POINT_VALUES=[100,200,300,400];
+
+function buildBoard(){
+  const board=document.getElementById('board');
+  const cols=CATS.length;
+  const colStyle=`grid-template-columns:repeat(${cols},1fr)`;
+
+  // Header row
+  const hRow=document.createElement('div');
+  hRow.className='board-header-row';
+  hRow.style.cssText=colStyle;
+  CATS.forEach((cat,ci)=>{
+    const h=document.createElement('div');
+    h.className='cat-header';
+    h.style.background=CAT_COLORS[ci%CAT_COLORS.length];
+    h.textContent=cat;
+    hRow.appendChild(h);
+  });
+  board.appendChild(hRow);
+
+  // Question rows
+  POINT_VALUES.forEach(pts=>{
+    const row=document.createElement('div');
+    row.className='board-row';
+    row.style.cssText=colStyle;
+    CATS.forEach((_,ci)=>{
+      const cell=document.createElement('div');
+      cell.className='cell available';
+      cell.id=`cell-${ci}-${pts}`;
+      cell.textContent='$'+pts;
+      row.appendChild(cell);
+    });
+    board.appendChild(row);
+  });
+}
+
+function markCell(catIndex, pts, state){
+  const cell=document.getElementById(`cell-${catIndex}-${pts}`);
+  if(!cell) return;
+  cell.className='cell '+state;
+  if(state==='used') cell.textContent='';
+  if(state==='selected') cell.textContent='$'+pts;
+}
+
+// ── WHEEL ──
+function buildWheel(){ drawWheel(wheelAngle); }
+
+function drawWheel(angle){
+  const canvas=document.getElementById('wheelCanvas');
+  if(!canvas||!CATS.length) return;
+  const ctx=canvas.getContext('2d');
+  const n=CATS.length, slice=(2*Math.PI)/n;
+  const cx=canvas.width/2, cy=canvas.height/2, r=cx-3;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  CATS.forEach((cat,i)=>{
+    const s=angle+i*slice-Math.PI/2, e=s+slice;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,s,e); ctx.closePath();
+    ctx.fillStyle=CAT_COLORS[i%CAT_COLORS.length]; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(s+slice/2);
+    ctx.textAlign='right'; ctx.fillStyle='#fff';
+    const maxLen=8;
+    const label=cat.length>maxLen?cat.slice(0,maxLen)+'…':cat;
+    ctx.font=`bold 12px Heebo,sans-serif`;
+    ctx.fillText(label, r-8, 4);
+    ctx.restore();
+  });
+}
+
+document.getElementById('spinBtn').onclick=()=>{
+  if(spinning||!CATS.length) return;
+  // Check if any questions left
+  const pool=QS.filter(q=>!usedQIds.has(q.id));
+  if(!pool.length){ alert('כל השאלות נגמרו!'); return; }
+
+  spinning=true;
+  document.getElementById('spinBtn').disabled=true;
+  document.getElementById('wheelResult').innerHTML='';
+  document.getElementById('wheelHdr').textContent='מסתובב...';
+
+  // Pick random category that has available questions
+  const availableCats=[...new Set(pool.map(q=>q.catIndex))];
+  const chosenCat=availableCats[Math.floor(Math.random()*availableCats.length)];
+
+  // Pick random available point value for that category
+  const catPool=pool.filter(q=>q.catIndex===chosenCat);
+  const chosenQ=catPool[Math.floor(Math.random()*catPool.length)];
+  const chosenPts=POINT_VALUES.find(p=>p===100||p===200||p===300||p===400) || 100;
+  // find actual pts from question index
+  const qPts = getQuestionPoints(chosenQ);
+
+  const slice=(2*Math.PI)/CATS.length;
+  const target=-(chosenCat*slice)+Math.PI+Math.random()*slice*0.6;
+  const total=(4+Math.random()*3)*2*Math.PI+target;
+  const t0=performance.now(), dur=3000, a0=wheelAngle;
+
+  (function frame(now){
+    const t=Math.min((now-t0)/dur,1);
+    const ease=1-Math.pow(1-t,4);
+    wheelAngle=a0+total*ease;
+    drawWheel(wheelAngle);
+    if(t<1){ requestAnimationFrame(frame); return; }
+    spinning=false;
+    document.getElementById('wheelResult').innerHTML=`נבחר: <span>${CATS[chosenCat]} — $${qPts}</span>`;
+    document.getElementById('wheelHdr').textContent='🎯 '+CATS[chosenCat];
+    // Highlight cell
+    markCell(chosenCat, qPts, 'selected');
+    setTimeout(()=>launchQuestion(chosenQ, chosenCat, qPts), 1200);
+  })(performance.now());
+};
+
+function getQuestionPoints(q){
+  // Map question index within category to point value
+  const catQs=QS.filter(x=>x.catIndex===q.catIndex);
+  const idx=catQs.findIndex(x=>x.id===q.id);
+  return POINT_VALUES[idx] || 100;
+}
+
+function launchQuestion(q, catIndex, pts){
+  currentQ=q; revealed=false; timerDone=false;
+  currentPoints=pts;
+  usedQIds.add(q.id);
+
+  db.ref(GAME_PATH+'/game/current').set({
+    id:q.id, catIndex, catName:CATS[catIndex],
+    q:q.q, opts:q.opts, image:q.image||null,
+    pts, state:'question', ts:Date.now()
+  });
+  db.ref(GAME_PATH+'/answers').remove();
+  openQScreen(q, catIndex, pts);
+}
+
+function openQScreen(q, catIndex, pts){
+  document.getElementById('qCat').textContent=CATS[catIndex];
+  document.getElementById('qPts').textContent='$'+pts;
+  document.getElementById('qText').textContent=q.q;
+
+  const wrap=document.getElementById('qImgWrap');
+  if(q.image){ document.getElementById('qImg').src=q.image; wrap.classList.remove('hidden'); }
+  else { wrap.classList.add('hidden'); }
+
+  const letters=['א','ב','ג','ד'];
+  document.getElementById('qAnswers').innerHTML=q.opts.map((opt,i)=>`
+    <div class="abtn" id="abtn-${i}">
+      <span class="ltr">${letters[i]}</span> ${opt}
+    </div>`).join('');
+
+  document.getElementById('answeredCount').style.display='none';
+  document.getElementById('qStats').style.display='none';
+  document.getElementById('qExpl').style.display='none';
+  document.getElementById('nextBtn').classList.remove('visible');
+  const rb=document.getElementById('revealBtn');
+  rb.style.display='block'; rb.classList.remove('pulse');
+  rb.textContent='✅ חשוף תשובה';
+
+  document.getElementById('qOverlay').classList.add('open');
+  startTimer(pts);
+}
+
+function startTimer(pts){
+  let sec=TIMER_SEC;
+  const timerEl=document.getElementById('qTimer');
+  timerEl.textContent=sec; timerEl.className='qtimer';
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    sec--;
+    timerEl.textContent=sec;
+    if(sec<=10) timerEl.className='qtimer urg';
+    if(sec<=0){
+      clearInterval(timerInterval);
+      timerEl.className='qtimer done';
+      timerEl.textContent='⏰';
+      timerDone=true;
+      // Tell players time is up but they CAN still answer (late = half points)
+      db.ref(GAME_PATH+'/game/current/state').set('timeup');
+    }
+  },1000);
+}
+
+document.getElementById('revealBtn').onclick=()=>{
+  if(revealed) return;
+  revealed=true;
+  clearInterval(timerInterval);
+  const q=currentQ;
+  const rb=document.getElementById('revealBtn');
+  rb.style.display='none'; rb.classList.remove('pulse');
+  document.getElementById('answeredCount').style.display='none';
+
+  document.querySelectorAll('.abtn').forEach((b,i)=>{
+    if(i===q.correct) b.classList.add('correct');
+    else b.classList.add('wrong');
+  });
+
+  const answers=playerAnswers;
+  const counts=(q.opts||[]).map((_,i)=>Object.values(answers).filter(a=>{
+    const ai=typeof a==='number'?a:(a?.answer??a);
+    return ai===i;
+  }).length);
+  const total=Object.values(answers).length||1;
+  const letters=['א','ב','ג','ד'];
+  document.getElementById('statBars').innerHTML=counts.map((c,i)=>`
+    <div class="stat-row">
+      <div class="stat-lbl">${letters[i]}</div>
+      <div class="stat-bar"><div class="stat-fill ${i===q.correct?'correct':''}" style="width:${Math.round(c/total*100)}%"></div></div>
+      <div class="stat-cnt">${c}</div>
+    </div>`).join('');
+  document.getElementById('qStats').style.display='block';
+
+  if(q.inst||q.ans){
+    document.getElementById('qExpl').innerHTML=`<strong>💡 הסבר:</strong> ${q.ans||''}${q.inst?'<br><span style="opacity:.75;font-size:15px">'+q.inst+'</span>':''}`;
+    document.getElementById('qExpl').style.display='block';
+  }
+
+  db.ref(GAME_PATH+'/game/current/state').set('reveal');
+  db.ref(GAME_PATH+'/game/current/correct').set(q.correct);
+
+  // Score: full points if answered before timeup, half if after
+  Object.entries(answers).forEach(([pid,ans])=>{
+    const ansIdx=typeof ans==='number'?ans:(ans?.answer??ans);
+    const late=ans?.late||false;
+    if(ansIdx===q.correct&&players[pid]){
+      const pts=late?Math.round(currentPoints*0.5):currentPoints;
+      db.ref(GAME_PATH+`/players/${pid}`).update({score:(players[pid].score||0)+pts});
+    }
+  });
+
+  setTimeout(()=>{ document.getElementById('nextBtn').classList.add('visible'); },400);
+};
+
+document.getElementById('nextBtn').onclick=()=>{
+  // Mark cell as used
+  if(currentQ){
+    const catIndex=currentQ.catIndex;
+    const pts=currentPoints;
+    markCell(catIndex, pts, 'used');
+  }
+  db.ref(GAME_PATH+'/game/current').remove();
+  document.getElementById('qOverlay').classList.remove('open');
+  document.getElementById('spinBtn').disabled=false;
+  document.getElementById('wheelResult').innerHTML='';
+  document.getElementById('wheelHdr').textContent='סובבי את הגלגל לשאלה הבאה!';
+  db.ref(GAME_PATH+'/game/state').set('wheel');
+};
+
+// Lobby / reset
+document.getElementById('startBtn').onclick=()=>{
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('game').style.display='flex';
+  db.ref(GAME_PATH+'/game/state').set('wheel');
+};
+document.getElementById('backLobbyBtn').onclick=backToLobbyFn;
+function backToLobbyFn(){
+  document.getElementById('scoreScreen').classList.remove('open');
+  document.getElementById('game').style.display='none';
+  document.getElementById('lobby').style.display='flex';
+}
+document.getElementById('resetGameBtn').onclick=()=>{
+  if(!confirm('למחוק ניקוד ולהתחיל מחדש?')) return;
+  db.ref(GAME_PATH+'/answers').remove();
+  db.ref(GAME_PATH+'/game').remove();
+  Object.keys(players).forEach(pid=>db.ref(GAME_PATH+`/players/${pid}`).update({score:0}));
+  usedQIds.clear();
+  // Rebuild board
+  document.getElementById('board').innerHTML='';
+  buildBoard();
+};
+document.getElementById('resetBtn').onclick=()=>{
+  if(!confirm('למחוק הכל?')) return;
+  db.ref(GAME_PATH+'/players').remove();
+  db.ref(GAME_PATH+'/answers').remove();
+  db.ref(GAME_PATH+'/game').remove();
+  usedQIds.clear();
+};
+
+function openScoreScreen(){ renderAll(); document.getElementById('scoreScreen').classList.add('open'); }
+function closeScoreScreen(){ document.getElementById('scoreScreen').classList.remove('open'); }
+</script>
+</body>
+</html>
